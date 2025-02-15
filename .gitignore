@@ -163,6 +163,7 @@ cython_debug/
 src/single/
 src/batch/
 src/output/
+src/temp/
 
 # Tools
 src/bin/

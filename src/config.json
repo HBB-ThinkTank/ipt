@@ -6,20 +6,22 @@
     "paths": {
         "base_folder_single": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\single",
         "base_folder_batch": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\batch",
-        "output_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\output"
+        "output_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\output",
+        "temp_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\temp"
     },
     "parameters": {
         "loglevel": 1,
         "batch_mode": 0,
         "single_image": 1,
         "collage": 1,
-        "debug": 0
+        "debug": 1,
+		"empty": 1
     },
     "tools": {
-        "pingo": "C:\\Tools\\pingo.exe",
-        "jpegoptim": "C:\\Tools\\jpegoptim.exe",
-        "ect": "C:\\Tools\\ect.exe",
-        "guetzli": "C:\\Tools\\guetzli.exe",
+        "pingo": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\pingo.exe",
+        "jpegoptim": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\jpegoptim.exe",
+        "ect": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\ect.exe",
+        "guetzli": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\guetzli.exe",
         "7zip": "C:\\Program Files\\7-Zip\\7z.exe"
     },
     "tool_parameters_lossless": { 
