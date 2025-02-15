@@ -1,0 +1,40 @@
+{
+    "program": {
+        "name": "IPT Tool",
+        "version": "0.0.1"
+    },
+    "paths": {
+        "base_folder_single": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\single",
+        "base_folder_batch": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\batch",
+        "output_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\output"
+    },
+    "parameters": {
+        "loglevel": 1,
+        "batch_mode": 0,
+        "single_image": 1,
+        "collage": 1,
+        "debug": 0
+    },
+    "tools": {
+        "pingo": "C:\\Tools\\pingo.exe",
+        "jpegoptim": "C:\\Tools\\jpegoptim.exe",
+        "ect": "C:\\Tools\\ect.exe",
+        "guetzli": "C:\\Tools\\guetzli.exe",
+        "7zip": "C:\\Program Files\\7-Zip\\7z.exe"
+    },
+    "tool_parameters_lossless": { 
+        "pingo": "-s4 -lossless -nostrip -notime",
+        "jpegoptim": "-p --keep-all --nofix",
+        "ect": "-9 -progressive -keep --mt-deflate --mt-file"
+    },
+    "tool_parameters_lossy": { 
+        "pingo": "-s4 -lossless -nostrip -notime",
+        "jpegoptim": "-p --keep-all --nofix",
+        "ect": "-9 -progressive -keep --mt-deflate --mt-file",
+        "guetzli": "--quality 85 --auto --nomemlimit"
+    },
+    "profile_selection": {
+        "folder_images": "lossless",
+        "single_collage_images": "lossy"
+    }
+}
