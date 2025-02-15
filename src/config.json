@@ -1,7 +1,7 @@
 {
     "program": {
         "name": "IPT Tool",
-        "version": "0.0.3"
+        "version": "0.1.0"
     },
     "paths": {
         "base_folder_single": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\single",
