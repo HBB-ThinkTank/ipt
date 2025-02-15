@@ -17,14 +17,34 @@
         "debug": 1,
 		"empty": 1
     },
-    "tools": {
-        "pingo": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\pingo.exe",
-        "jpegoptim": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\jpegoptim.exe",
-        "ect": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\ect.exe",
-        "guetzli": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\guetzli.exe",
-        "7zip": "C:\\Program Files\\7-Zip\\7z.exe"
-    },
-    "tool_parameters_lossless": { 
+	"tools": {
+		"pingo": {
+			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\pingo.exe",
+			"download": "https://css-ig.net/pingo",
+			"license": "https://css-ig.net/pingo-license"
+		},
+		"jpegoptim": {
+			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\jpegoptim.exe",
+			"download": "https://github.com/tjko/jpegoptim/releases",
+			"license": "https://github.com/tjko/jpegoptim/blob/master/LICENSE"
+		},
+		"ect": {
+			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\ect.exe",
+			"download": "https://github.com/fhanau/Efficient-Compression-Tool/releases",
+			"license": "https://github.com/fhanau/Efficient-Compression-Tool/blob/master/LICENSE"
+		},
+		"guetzli": {
+			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\guetzli.exe",
+			"download": "https://github.com/doterax/guetzli-cuda-opencl/releases",
+			"license": "https://github.com/doterax/guetzli-cuda-opencl/blob/master/LICENSE"
+		},
+		"7zip": {
+			"path": "C:\\Program Files\\7-Zip\\7z.exe",
+			"download": "https://www.7-zip.org/download.html",
+			"license": "https://www.7-zip.org/license.txt"
+		}
+	},
+"tool_parameters_lossless": { 
         "pingo": "-s4 -lossless -nostrip -notime",
         "jpegoptim": "-p --keep-all --nofix",
         "ect": "-9 -progressive -keep --mt-deflate --mt-file"
