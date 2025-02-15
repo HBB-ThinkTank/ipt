@@ -2,12 +2,16 @@ import json
 import sys
 import os
 import shutil
+from datetime import datetime
 
 # Skript- und Konfigurationsversionen
-SCRIPT_VERSION = "0.0.2"
-MIN_CONFIG_VERSION = "0.0.1"
+SCRIPT_VERSION = "0.0.3"
+MIN_CONFIG_VERSION = "0.0.3"
 
 def load_config(file_path="config.json"):
+
+# AB HIER AUS DER TEST VERSION KOPIEREN
+
     with open(file_path, "r") as f:
         config = json.load(f)
 
@@ -20,6 +24,26 @@ def load_config(file_path="config.json"):
     return config
 
 config = load_config()
+
+# Prüfung ob die Tool-Executables erreichbar sind
+def verify_tool_paths():
+    missing_tools = []
+    
+    for tool, data in config["tools"].items():
+        tool_path = data["path"]
+        if not os.path.exists(tool_path):
+            missing_tools.append(tool)
+            print(f"[ERROR] Tool '{tool}' nicht gefunden: {tool_path}")
+
+    if missing_tools:
+        print("[ERROR] Die folgenden Tools fehlen oder die Pfade sind falsch:")
+        print(", ".join(missing_tools))
+        sys.exit(1)  # Beenden, falls wichtige Tools fehlen
+    else:
+        print("[INFO] Alle benötigten Tools sind vorhanden.")
+
+# Diese Funktion sollte nach dem Laden der Config, aber vor der Verarbeitung der CLI-Parameter aufgerufen werden:
+verify_tool_paths()
 
 # CLI-Parameter verarbeiten
 def process_cli_args():
@@ -110,6 +134,75 @@ def process_cli_args():
             config['paths']['output_folder'] = output_folder
             print(f"[INFO] Output-Ordner auf '{output_folder}' gesetzt (override)")
 
+        # CLI-Parameter für das Logging verarbeiten
+        if arg.startswith("log="):
+            log_override_mapping = {
+                "t": "temp",
+                "i": "input",
+                "o": "output",
+                "d": "default"
+            }
+            log_value = arg.split("=")[1].lower()
+            
+            if log_value in log_override_mapping:
+                config["logging"]["log_override"] = log_override_mapping[log_value]
+                print(f"[INFO] Log-Override auf '{log_override_mapping[log_value]}' gesetzt (override)")
+            else:
+                print("[WARN] Ungültiger Log-Override. Erlaubte Werte: t (temp), i (input), o (output), d (default)")
+
+def log_message(message, log_level=1):
+    """Schreibt eine Lognachricht je nach gewähltem Log-Level."""
+    
+    # Log-Level-Filterung
+    if config['parameters']['loglevel'] == 0:
+        return
+    if config['parameters']['loglevel'] < log_level:
+        return
+
+    # Speicherort bestimmen
+    if config['logging']['log_override'] == 't':
+        folder = config['paths']['temp_folder']
+    elif config['logging']['log_override'] == 'i':
+        if config['parameters']['batch_mode'] == 0:
+            folder = config['paths']['base_folder_single']
+        else:
+            folder = config['paths']['base_folder_batch']
+    elif config['logging']['log_override'] == 'o':
+        folder = config['paths']['output_folder']
+    else:
+        folder = config['logging']['log_folder']
+    
+    # Log-Dateinamen bestimmen
+    if config['logging']['log_mode'] == 'append':
+        log_file_name = "ipt.log"
+    else:
+        log_file_name = f"ipt_{datetime.now().strftime('%Y%m%d%H%M%S')}.log"
+
+    # Log-Dateipfad erstellen
+    os.makedirs(folder, exist_ok=True)
+    log_file = os.path.join(folder, log_file_name)
+    
+    # Zeitstempel generieren
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Log-Dateigröße überprüfen
+    MAX_LOG_SIZE = 5 * 1024 * 1024  # 5 MB
+    if os.path.exists(log_file) and os.path.getsize(log_file) > MAX_LOG_SIZE:
+        archive_name = f"{os.path.splitext(log_file)[0]}_{datetime.now().strftime('%Y%m%d%H%M%S')}.log"
+        os.rename(log_file, archive_name)
+        print(f"[INFO] Log-Datei zu '{archive_name}' umbenannt, da sie zu groß wurde.")
+        
+    # Log-Level Tag setzen
+    log_levels = {0: "NONE", 1: "INFO", 2: "DEBUG"}
+    level_tag = log_levels.get(log_level, "INFO")  # Standard ist INFO
+
+    # Log-Nachricht schreiben
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(f"[{timestamp}] [{level_tag}] {message}\n")
+
+def process_images(base_folder):
+        return
+
 def clear_temp_folder():
     temp_folder = config['paths']['temp_folder']
     if config['parameters'].get('empty', 0) == 1:
@@ -128,10 +221,21 @@ def debug_log(message, level=1):
         print(f"[DEBUG] {message}")
 
 def main(config):
+    """Hauptfunktion zur Steuerung der Bildverarbeitung."""
     debug_log("Programmstart")
+    log_message("Programmstart")
     print(f"{config['program']['name']} - Version {SCRIPT_VERSION}")
     debug_log("Programm erfolgreich gestartet", 2)
 
+    if config['parameters']['batch_mode'] == 0:
+        base_folder = os.path.dirname(config['paths']['base_folder_single'])
+        process_images(base_folder)
+    else:
+        input_folder = config['paths']['base_folder_batch']
+        for subfolder in os.listdir(input_folder):
+            base_folder = os.path.join(input_folder, subfolder)
+            if os.path.isdir(base_folder):  # Stellt sicher, dass nur Ordner verarbeitet werden
+                process_images(base_folder)
+
 if __name__ == "__main__":
     main(config)
-

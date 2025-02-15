@@ -164,6 +164,7 @@ src/single/
 src/batch/
 src/output/
 src/temp/
+test/
 
 # Tools
 src/bin/

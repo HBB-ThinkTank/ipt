@@ -1,40 +1,55 @@
 {
     "program": {
         "name": "IPT Tool",
-        "version": "0.0.1"
+        "version": "0.0.3"
     },
     "paths": {
-        "base_folder_single": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\single",
-        "base_folder_batch": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\batch",
-        "output_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\output",
-        "temp_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\temp"
+        "base_folder_single": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\single",
+        "base_folder_batch": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\batch",
+        "output_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\output",
+        "temp_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\temp"
     },
-    "parameters": {
+	"logging": {
+		"log_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\output",
+		"log_mode": "timestamp",
+		"_c_log_mode": "\"timestamp\" oder \"append\"",
+		"log_override": "default",
+		"_c_log_override": "\"default\", \"temp\", \"input\", \"output\""
+	},
+	"parameters": {
         "loglevel": 1,
         "batch_mode": 0,
         "single_image": 1,
         "collage": 1,
         "debug": 1,
-		"empty": 1
+		"empty": 1,
+		"abort_missing_001_004": 2,
+		"_c_abort_missing_001_004": "Bearbeitung des Ordners fortsetzen, 1 = Skript-Abbruch, 2 = Automatische Konstruktion der 4 Bilder aus vorhandenen JPEGs",
+		"abort_incomplete_001_004": 0,
+		"_c_abort_incomplete_001_004": "0 = Erstes gefundenes Bild für single_image verwenden, 1 = Skript-Abbruch",
+		"abort_missing_subfolder": 1,
+		"_c_abort_missing_subfolder": "1 = Skript bricht IMMER ab, wenn kein Unterordner existiert",
+		"abort_no_jpeg": 0,
+		"_c_abort_no_jpeg": "0 = Keine Optimierung, Skript läuft weiter, 1 = Skript-Abbruch"
     },
 	"tools": {
 		"pingo": {
-			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\pingo.exe",
+			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\bin\\pingo.exe",
 			"download": "https://css-ig.net/pingo",
 			"license": "https://css-ig.net/pingo-license"
 		},
 		"jpegoptim": {
-			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\jpegoptim.exe",
+			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\bin\\jpegoptim.exe",
 			"download": "https://github.com/tjko/jpegoptim/releases",
 			"license": "https://github.com/tjko/jpegoptim/blob/master/LICENSE"
 		},
 		"ect": {
-			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\ect.exe",
+			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\bin\\ect.exe",
 			"download": "https://github.com/fhanau/Efficient-Compression-Tool/releases",
 			"license": "https://github.com/fhanau/Efficient-Compression-Tool/blob/master/LICENSE"
 		},
 		"guetzli": {
-			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\bin\\guetzli.exe",
+			"path": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\bin\\guetzli.exe",
 			"download": "https://github.com/doterax/guetzli-cuda-opencl/releases",
 			"license": "https://github.com/doterax/guetzli-cuda-opencl/blob/master/LICENSE"
 		},
