@@ -1,10 +1,10 @@
 {
     "program": {
         "name": "IPT Tool",
-        "version": "0.1.0"
+        "version": "0.9.0"
     },
     "paths": {
-        "base_folder_single": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\single",
+        "base_folder_single": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\single\\",
         "base_folder_batch": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\batch",
         "output_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\output",
         "temp_folder": "C:\\Users\\Holge\\Documents\\GitHub\\ipt\\src\\temp"
@@ -21,16 +21,28 @@
         "batch_mode": 0,
         "single_image": 1,
         "collage": 1,
-        "debug": 1,
+        "debug": 0,
 		"empty": 1,
 		"abort_missing_001_004": 2,
-		"_c_abort_missing_001_004": "Bearbeitung des Ordners fortsetzen, 1 = Skript-Abbruch, 2 = Automatische Konstruktion der 4 Bilder aus vorhandenen JPEGs",
+		"_c_abort_missing_001_004": "0 = Bearbeitung des Ordners fortsetzen, 1 = Skript-Abbruch, 2 = Automatische Konstruktion der 4 Bilder aus vorhandenen JPEGs",
 		"abort_incomplete_001_004": 0,
 		"_c_abort_incomplete_001_004": "0 = Erstes gefundenes Bild für single_image verwenden, 1 = Skript-Abbruch",
 		"abort_missing_subfolder": 1,
 		"_c_abort_missing_subfolder": "1 = Skript bricht IMMER ab, wenn kein Unterordner existiert",
 		"abort_no_jpeg": 0,
-		"_c_abort_no_jpeg": "0 = Keine Optimierung, Skript läuft weiter, 1 = Skript-Abbruch"
+		"_c_abort_no_jpeg": "0 = Keine Optimierung, Skript läuft weiter, 1 = Skript-Abbruch",
+		"image_height": 1200,
+		"image_width": 800,
+		"aspect_ratio_mode": 0,
+		"_c_aspect_ratio_mode": "0 = width:height, 1 = from 001, 2 = from first image in folder, 3 = manual",
+		"aspect_ratio_manual": "2:3",
+		"_c_aspect_ratio_manual": "Wird nur genutzt, wenn aspect_ratio_mode = 3",
+		"size_override": 0,
+		"_c_size_override": "0 = Limit auf max 800x1200, 1 = Fixe Höhe (h=1200px), 2 = Fixe Breite (b=800px)",
+		"override_ext": {
+			"zip": "cbz",
+			"rar": "cbr"
+		}
     },
 	"tools": {
 		"pingo": {
@@ -59,19 +71,53 @@
 			"license": "https://www.7-zip.org/license.txt"
 		}
 	},
-"tool_parameters_lossless": { 
+	"tool_parameters_lossless": { 
         "pingo": "-s4 -lossless -nostrip -notime",
         "jpegoptim": "-p --keep-all --nofix",
         "ect": "-9 -progressive -keep --mt-deflate --mt-file"
     },
     "tool_parameters_lossy": { 
-        "pingo": "-s4 -lossless -nostrip -notime",
-        "jpegoptim": "-p --keep-all --nofix",
-        "ect": "-9 -progressive -keep --mt-deflate --mt-file",
-        "guetzli": "--quality 85 --auto --nomemlimit"
+        "pingo": "-s4 -quality=85",
+        "jpegoptim": "-s -v --nofix",
+        "ect": "-9 -progressive --mt-deflate --mt-file",
+        "guetzli": "--quality 85 --nomemlimit"
     },
     "profile_selection": {
         "folder_images": "lossless",
         "single_collage_images": "lossy"
-    }
+    },
+	"tool_order": {
+		"lossless": ["pingo", "jpegoptim", "ect"],
+		"lossy": ["pingo", "jpegoptim", "ect", "guetzli"]
+	},
+	"compression_profiles": {
+		"7z_bzip2": {
+			"tool": "7-Zip",
+			"path": "C:\\Program Files\\7-Zip\\7z.exe",
+			"download": "https://www.7-zip.org/download.html",
+			"license": "https://www.7-zip.org/license.txt",
+			"parameters": {
+				"1": { "order": 1, "value": "a" },
+				"2": { "order": 2, "value": "-tzip" },
+				"3": { "order": 3, "value": "ipt:output" },
+				"4": { "order": 4, "value": "ipt:input" },
+				"5": { "order": 5, "value": "-mm=BZip2 -mx=9 -mpass=10" }
+			},
+			"filext": "zip"
+		},
+		"7z_deflate64": {
+			"tool": "7-Zip",
+			"path": "C:\\Program Files\\7-Zip\\7z.exe",
+			"download": "https://www.7-zip.org/download.html",
+			"license": "https://www.7-zip.org/license.txt",
+			"parameters": {
+				"1": { "order": 1, "value": "a" },
+				"2": { "order": 2, "value": "-tzip" },
+				"3": { "order": 3, "value": "ipt:output" },
+				"4": { "order": 4, "value": "ipt:input" },
+				"5": { "order": 5, "value": "-mm=Deflate64 -mx=9 -mfb=257 -mpass=13" }
+			},
+			"filext": "zip"
+		}
+	}
 }
