@@ -11,7 +11,7 @@ import subprocess
 import zipfile
 
 # Skript- und Konfigurationsversionen TEST VERION
-SCRIPT_VERSION = "0.9.0"
+SCRIPT_VERSION = "0.9.1"
 MIN_CONFIG_VERSION = "0.9.0"
 
 ######################################################################## 
@@ -377,13 +377,18 @@ def process_images(base_folder, input_folder=None):
 
     # Kopieren der Dateien in die temporären Ordner
     copy_images(image_files, temp_folder)
+    log_message(f"Kopieren von {len(image_files)} Dateien in den Ordner {os.path.basename(temp_folder)}.", 2)
     temp_subfolder = os.path.join(temp_folder, image_subfolder_basename)
     copy_images(subfolder_files, temp_subfolder)
+    log_message(f"Kopieren von {len(subfolder_files)} Dateien in den Ordner {os.path.basename(temp_subfolder)}.", 2)
     
     # Auflisten der Dateien zur Weiterverarbeitung
     collage_temp_images = find_image_files(temp_folder)
+    log_message(f"{len(collage_temp_images)} Dateien im Ordner {os.path.basename(temp_folder)} gefunden.", 2)
     temp_subfolder_images = [os.path.join(temp_subfolder, f) for f in os.listdir(temp_subfolder) if f.lower().endswith(('.jpg', '.jpeg'))]
+    log_message(f"{len(temp_subfolder_images)} JPEG-Bilder im Ordner {os.path.basename(temp_subfolder)} gefunden.", 2)
     temp_subfolder_files = [os.path.join(temp_subfolder, f) for f in os.listdir(temp_subfolder) if os.path.isfile(os.path.join(temp_subfolder, f))]
+    log_message(f"Insgesamt {len(temp_subfolder_files)} Dateien im Ordner {os.path.basename(temp_subfolder)} gefunden.", 2)
 
     # Überprüfung der Datei-Integrität
     verify_file_integrity(subfolder_files, temp_subfolder_files)
@@ -494,7 +499,7 @@ def find_image_files(base_folder):
     return image_paths
 
 def auto_select_images(subfolder_images):
-    """Wählt automatisch 4 Bilder aus einer Liste von JPEGs für die Collage."""
+    """Wählt automatisch 4 Bilder aus einer Liste von JPEGs für die Collage und kopiert sie mit festen Namen ins temporäre Verzeichnis."""
     
     num_images = len(subfolder_images)
     
@@ -523,18 +528,29 @@ def auto_select_images(subfolder_images):
         subfolder_images[index_004]
     ]
 
-    # Nur Dateinamen extrahieren
-    filenames = [os.path.basename(img) for img in selected_images]
-    
-    # Übergeordneten Ordner extrahieren (alle Bilder sollten aus demselben Ordner sein)
-    parent_folder = os.path.basename(os.path.dirname(selected_images[0]))
+    # Neuer spezieller Unterordner für die Collage-Bilder im temporären Verzeichnis
+    collage_temp_folder = os.path.join(config['paths']['temp_folder'], "collage_images")
+    os.makedirs(collage_temp_folder, exist_ok=True)
 
-    # Benutzerfreundliche Ausgabe
+    # Pfade der neuen Dateien mit Namen 001.jpg bis 004.jpg
+    new_image_paths = [
+        os.path.join(collage_temp_folder, f"{i:03}.jpg") for i in range(1, 5)
+    ]
+
+    # Kopieren und Umbenennen der ausgewählten Bilder
+    for src, dst in zip(selected_images, new_image_paths):
+        shutil.copy2(src, dst)
+
+    # Nur Dateinamen extrahieren für Logging
+    filenames = [os.path.basename(img) for img in selected_images]
     formatted_files = f"{filenames[0]}, {filenames[1]}, {filenames[2]} und {filenames[3]}"
+    
+    parent_folder = os.path.basename(os.path.dirname(selected_images[0]))
+    
     print(f"[INFO] Automatisch gewählte Bilder: {formatted_files} aus dem Ordner {parent_folder}")
     log_message(f"Automatisch gewählte Bilder: {formatted_files} aus dem Ordner {parent_folder}")
 
-    return selected_images
+    return new_image_paths  # Gibt die neuen Pfade zurück
 
 def get_safe_temp_folder(base_folder, output_folder):
     """Ermittelt einen sicheren Temp-Ordner, wechselt falls nötig zu einem alternativen Speicherort."""
