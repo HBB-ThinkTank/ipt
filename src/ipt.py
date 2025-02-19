@@ -9,31 +9,29 @@ from PIL import Image, ImageFilter
 import hashlib
 import subprocess
 import zipfile
+from typing import List, Tuple, Dict, Any
 
 # Skript- und Konfigurationsversionen TEST VERION
-SCRIPT_VERSION = "0.9.1"
-MIN_CONFIG_VERSION = "0.9.0"
+SCRIPT_VERSION: str = "0.9.2"
+MIN_CONFIG_VERSION: str = "0.9.1"
 
 ######################################################################## 
 ####                KONFIGURATION & EINSTELLUNGEN                   ####
 ######################################################################## 
 
-def load_config(file_path="config.json"):
-
-# AB HIER AUS DER TEST VERSION KOPIEREN
-
+def load_config(file_path: str = "config.json") -> Dict[str, Any]:
     with open(file_path, "r") as f:
         config = json.load(f)
 
     # Versionsprüfung
-    config_version = config['program']['version']
+    config_version: str = config['program']['version']
     if config_version < MIN_CONFIG_VERSION:
         print(f"[ERROR] Inkompatible Config-Version: {config_version}. Benötigt wird mindestens {MIN_CONFIG_VERSION}.")
         sys.exit(1)
 
     return config
 
-config = load_config()
+config: Dict[str, Any] = load_config()
 print(f"{config['program']['name']} - Version {SCRIPT_VERSION}\nCopyright 2025 HBB under AGPLv3")
 
 
@@ -42,7 +40,7 @@ def verify_tool_paths():
     missing_tools = []
     
     for tool, data in config["tools"].items():
-        tool_path = data["path"]
+        tool_path: str = data["path"]
         if not os.path.exists(tool_path):
             missing_tools.append(tool)
             print(f"[ERROR] Tool '{tool}' nicht gefunden: {tool_path}")
@@ -54,7 +52,6 @@ def verify_tool_paths():
     else:
         print("[INFO] Alle benötigten Tools sind vorhanden.")
 
-# Diese Funktion sollte nach dem Laden der Config, aber vor der Verarbeitung der CLI-Parameter aufgerufen werden:
 verify_tool_paths()
 
 # CLI-Parameter verarbeiten
@@ -63,7 +60,7 @@ def process_cli_args():
         # Debug-Level
         if arg.startswith("debug=") or arg.startswith("d="):
             try:
-                debug_level = int(arg.split("=")[1])
+                debug_level: int = int(arg.split("=")[1])
                 if debug_level in (0, 1, 2):
                     config['parameters']['debug'] = debug_level
                     print(f"[INFO] Debug-Level auf {debug_level} gesetzt (override)")
@@ -75,7 +72,7 @@ def process_cli_args():
         # Log-Level
         if arg.startswith("log=") or arg.startswith("l="):
             try:
-                log_level = int(arg.split("=")[1])
+                log_level: int = int(arg.split("=")[1])
                 if log_level in (0, 1, 2):
                     config['parameters']['loglevel'] = log_level
                     print(f"[INFO] Log-Level auf {log_level} gesetzt (override)")
@@ -293,6 +290,9 @@ def process_images(base_folder, input_folder=None):
     if config['parameters']['single_image'] == 0 and config['parameters']['collage'] == 0:
         pass
     else:
+        target_aspect = get_target_aspect(image_files, subfolder_images)
+        debug_log(f"Breite und Höhe sind {target_aspect[0]}px weit und {target_aspect[1]}px hoch.", 2)
+        log_message(f"Breite und Höhe sind {target_aspect[0]}px weit und {target_aspect[1]}px hoch.", 2)
         if num_images == 4:
             debug_log("Alle vier Collage-Bilder vorhanden.", 2)
             log_message("Alle vier Collage-Bilder vorhanden.")
@@ -305,7 +305,7 @@ def process_images(base_folder, input_folder=None):
                 debug_log("Keine Collage-Bilder vorhanden, versuche automatische Auswahl...", 2)
                 log_message("Keine Collage-Bilder vorhanden, versuche automatische Auswahl...", 2)
                 if num_subfolder_images >= 4:
-                    image_files = auto_select_images(subfolder_images)  # Automatische Auswahl durchführen
+                    image_files = auto_select_images(subfolder_images, target_aspect)  # Automatische Auswahl durchführen
                     if len(image_files) == 4:
                         if config['parameters']['collage'] == 1:
                             log_message("Vier Collage-Bilder ausgewählt.")
@@ -324,8 +324,8 @@ def process_images(base_folder, input_folder=None):
                         config['parameters']['single_image'] = 0
                         config['parameters']['collage'] = 0
                 elif num_subfolder_images >= 1:
-                    image_files = auto_select_images(subfolder_images)  # Automatische Auswahl durchführen
-                    if image_files:
+                    image_files = auto_select_images(subfolder_images, target_aspect)  # Automatische Auswahl durchführen
+                    if len(image_files) >= 1:
                         print("Es wird nur das Cover-Bild erstellt.")
                         log_message("Es wird nur das Cover-Bild erstellt.")
                         config['parameters']['collage'] = 0
@@ -345,10 +345,50 @@ def process_images(base_folder, input_folder=None):
                 config['parameters']['single_image'] = 0
                 config['parameters']['collage'] = 0
         else:  # Falls nur 1-3 Bilder vorhanden sind
+            subfolder_images2 = list(subfolder_images)
+            subfolder_images2[0] = image_files[0]
             if config['parameters']['abort_incomplete_001_004'] == 1:
                 print(f"[ERROR] Nur {num_images} von 4 Collage-Bildern gefunden! Skript bricht ab.")
                 log_message(f"[ERROR] Nur {num_images} von 4 Collage-Bildern gefunden! Skript bricht ab.")
                 return
+            elif config['parameters']['abort_incomplete_001_004'] == 2:
+                debug_log("Nur ein Collage-Bild vorhanden, versuche automatische Auswahl...", 2)
+                log_message("Nur ein Collage-Bild vorhanden, versuche automatische Auswahl...", 2)
+                if num_subfolder_images >= 4:
+                    image_files = auto_select_images(subfolder_images2, target_aspect)  # Automatische Auswahl durchführen
+                    if len(image_files) == 4:
+                        if config['parameters']['collage'] == 1:
+                            log_message("Vier Collage-Bilder ausgewählt.")
+                        else:
+                            log_message(" Ein Bild für das Cover-Image wurde ausgewählt.")
+                    elif len(image_files) >= 1:
+                        if config['parameters']['collage'] == 1:
+                            print("Es wird nur das Cover-Bild erstellt.")
+                            log_message("Es wird nur das Cover-Bild erstellt.")
+                            config['parameters']['collage'] = 0
+                        else:
+                            log_message(" Ein Bild für das Cover-Image wurde ausgewählt.")
+                    else:  # Falls auto_select_images keine Bilder liefern konnte
+                        print(f"[DEBUG] Keines der 4 Collage-Bilder (001-004) gefunden! Es wird nur der Bilderordner bearbeitet.")
+                        log_message(f"[DEBUG] Automatische Auswahl fehlgeschlagen! Es wird nur der Bilderordner bearbeitet.")
+                        config['parameters']['single_image'] = 0
+                        config['parameters']['collage'] = 0
+                elif num_subfolder_images >= 1:
+                    image_files = auto_select_images(subfolder_images2, target_aspect)  # Automatische Auswahl durchführen
+                    if len(image_files) >= 1:
+                        print("Es wird nur das Cover-Bild erstellt.")
+                        log_message("Es wird nur das Cover-Bild erstellt.")
+                        config['parameters']['collage'] = 0
+                    else:  # Falls auto_select_images keine Bilder liefern konnte
+                        print(f"[DEBUG] Keines der 4 Collage-Bilder (001-004) gefunden! Es wird nur der Bilderordner bearbeitet.")
+                        log_message(f"[DEBUG] Automatische Auswahl fehlgeschlagen! Es wird nur der Bilderordner bearbeitet.")
+                        config['parameters']['single_image'] = 0
+                        config['parameters']['collage'] = 0
+                else:
+                    print(f"[DEBUG] Keines der 4 Collage-Bilder (001-004) gefunden! Es wird nur der Bilderordner bearbeitet.")
+                    log_message(f"Keines der 4 Collage-Bilder (001-004) gefunden! Es wird nur der Bilderordner bearbeitet.")
+                    config['parameters']['single_image'] = 0
+                    config['parameters']['collage'] = 0
             else:
                 debug_log(f"Nur {num_images} Collage-Bilder gefunden. Verwende erstes für Single Image.", 2)
                 log_message(f"Nur {num_images} Collage-Bilder gefunden. Verwende erstes für Single Image.")
@@ -398,45 +438,7 @@ def process_images(base_folder, input_folder=None):
     if config['parameters']['single_image'] == 0 and config['parameters']['collage'] == 0:
         pass
     else:
-        # Standardwerte aus der Config
-        target_width = config['parameters']['image_width']
-        target_height = config['parameters']['image_height']
-        aspect_ratio = target_width / target_height
-        
-        # Seitenverhältnis bestimmen
-        if config['parameters']['aspect_ratio_mode'] == 0:
-            pass
-        elif config['parameters']['aspect_ratio_mode'] == 1:
-            ref_width, ref_height = get_image_size(collage_temp_images[0])
-            aspect_ratio = ref_width / ref_height
-        elif config['parameters']['aspect_ratio_mode'] == 2:
-            if temp_subfolder_images:
-                ref_width, ref_height = get_image_size(temp_subfolder_images[0])
-                aspect_ratio = ref_width / ref_height
-        else:
-            try:
-                ref_width, ref_height = map(float, config['parameters']['manual_aspect_ratio'].split(":"))
-                aspect_ratio = ref_width / ref_height
-            except:
-                print("[ERROR] Ungültiges manuelles Seitenverhältnis! Nutze Standard.")
-                log_message("[ERROR] Ungültiges manuelles Seitenverhältnis! Nutze Standard.")
-        
-        # Größenanpassung je nach size_override
-        if config['parameters']['size_override'] == 1:
-            target_width = round(target_height * aspect_ratio)
-        elif config['parameters']['size_override'] == 2:
-            target_height = round(target_width / aspect_ratio)
-        else:
-            # Standard: Breite/Höhe unter max. Werten lassen
-            if target_width / target_height > aspect_ratio:
-                target_width = round(target_height * aspect_ratio)
-            else:
-                target_height = round(target_width / aspect_ratio)
-        
-        # Wenn Collage: dann müssen die Seiten durch 2 teilbar sein
-        if config['parameters']['collage'] == 1:
-            target_width = 2 * round(target_width / 2)
-            target_height = 2 * round(target_height / 2)
+        target_width, target_height = get_target_aspect(collage_temp_images, temp_subfolder_images)
             
         debug_log(f"Die Coverbilder werden mit {target_width}px weit und {target_height}px hoch erstellt.", 2)
         log_message(f"Die Coverbilder werden mit {target_width}px weit und {target_height}px hoch erstellt.", 2)
@@ -498,35 +500,118 @@ def find_image_files(base_folder):
             log_message(f"Bild {base} nicht gefunden in {base_folder}", 2)
     return image_paths
 
-def auto_select_images(subfolder_images):
-    """Wählt automatisch 4 Bilder aus einer Liste von JPEGs für die Collage und kopiert sie mit festen Namen ins temporäre Verzeichnis."""
+def get_image_orientation(image_path: str) -> str:
+    """
+    Bestimmt die Ausrichtung eines Bildes (Hoch- oder Querformat).
+    """
     
-    num_images = len(subfolder_images)
+    with Image.open(image_path) as img:
+        width, height = img.size
+    
+    return "portrait" if height >= width else "landscape"
+
+def get_target_aspect(collage_images: List[str], subfolder_images: List[str]) -> Tuple[int, int]:
+    """
+    Berechnet das Zielseitenverhältnis basierend auf der Config und vorhandenen Bildern.
+    """
+    # Standardwerte aus der Config
+    target_width = config['parameters']['image_width']
+    target_height = config['parameters']['image_height']
+    aspect_ratio = target_width / target_height
+    
+    # Seitenverhältnis bestimmen
+    if config['parameters']['aspect_ratio_mode'] == 1 and collage_images:
+        ref_width, ref_height = get_image_size(collage_images[0])
+        aspect_ratio = ref_width / ref_height
+    elif config['parameters']['aspect_ratio_mode'] == 2 and subfolder_images:
+        ref_width, ref_height = get_image_size(subfolder_images[0])
+        aspect_ratio = ref_width / ref_height
+    elif config['parameters']['aspect_ratio_mode'] == 3:
+        try:
+            ref_width, ref_height = map(float, config['parameters']['manual_aspect_ratio'].split(":"))
+            aspect_ratio = ref_width / ref_height
+        except ValueError:
+            print("[ERROR] Ungültiges manuelles Seitenverhältnis! Nutze Standard.")
+            log_message("[ERROR] Ungültiges manuelles Seitenverhältnis! Nutze Standard.")
+    
+    # Größenanpassung je nach size_override
+    if config['parameters']['size_override'] == 1:
+        target_width = round(target_height * aspect_ratio)
+    elif config['parameters']['size_override'] == 2:
+        target_height = round(target_width / aspect_ratio)
+    else:
+        if target_width / target_height > aspect_ratio:
+            target_width = round(target_height * aspect_ratio)
+        else:
+            target_height = round(target_width / aspect_ratio)
+    
+    # Falls Collage-Modus aktiviert ist, müssen Breite und Höhe durch 2 teilbar sein
+    if config['parameters']['collage'] == 1:
+        target_width = 2 * round(target_width / 2)
+        target_height = 2 * round(target_height / 2)
+    
+    return target_width, target_height
+
+def auto_select_images(subfolder_images: List[str], target_aspect: Tuple[int, int]) -> List[str]:
+    """
+    Wählt 4 Bilder aus der gegebenen Liste subfolder_images nach den festgelegten Regeln aus.
+    """
+    num_images: int = len(subfolder_images)
     
     if num_images < 4:
-        print("[ERROR] Zu wenige Bilder für automatische Auswahl!")
-        log_message("[ERROR] Zu wenige Bilder für automatische Auswahl!")
-        return None  # Falls weniger als 4 Bilder vorhanden sind, bricht es ab.
-
-    max_index = num_images - 1  # Der höchste Index der Liste
+        raise ValueError("Mindestens 4 Bilder erforderlich, um eine Collage zu erstellen!")
     
-    # Berechnung der Indizes mit Rundung
-    index_001 = 0
-    index_002 = max(1, round(max_index * 0.3))
-    index_003 = max(index_002 + 1, round(max_index * 0.6))
-    index_004 = max(index_003 + 1, round(max_index * 0.9))
+    # Zielausrichtung bestimmen (portrait = Hochformat, landscape = Querformat)
+    target_orientation: str = "portrait" if target_aspect[1] >= target_aspect[0] else "landscape"
     
-    # Sicherstellen, dass die Indizes gültig bleiben
-    index_002 = min(index_002, max_index)
-    index_003 = min(index_003, max_index)
-    index_004 = min(index_004, max_index)
+	# Fixe Positionen basierend auf der 0.3 / 0.6 / 0.9 Regel
+    pos_001: int = 0
+    pos_002: int = round(0.3 * num_images)
+    pos_003: int = round(0.6 * num_images)
+    pos_004: int = round(0.9 * num_images)
     
-    selected_images = [
-        subfolder_images[index_001],
-        subfolder_images[index_002],
-        subfolder_images[index_003],
-        subfolder_images[index_004]
-    ]
+    # Bild 001 bleibt immer das erste Bild
+    selected_images: List[str] = [subfolder_images[pos_001]]
+    
+    def find_best_fit(start_idx: int, valid_range: Tuple[int, int]) -> str:
+        """Sucht das nächste Bild mit der gleichen Ausrichtung wie das Ziel."""
+        min_idx, max_idx = valid_range
+        
+        if start_idx < min_idx or start_idx > max_idx:
+            raise ValueError("Startindex liegt außerhalb des gültigen Bereichs!")
+        
+        base_idx: int = start_idx
+        step: int = 1
+        direction: int = 1
+        
+        while min_idx <= base_idx <= max_idx:
+            candidate: str = subfolder_images[base_idx]
+            if get_image_orientation(candidate) == target_orientation:
+                return candidate
+            
+            # Umschalten zwischen +step und -step für die Suchrichtung
+            base_idx += step * direction
+            direction *= -1
+            step += 1
+        
+        return subfolder_images[start_idx]  # Falls nichts gefunden wird, bleibt die Originalwahl
+    
+    # Bild 002 finden
+    valid_range_002 = (1, pos_003 - 1)
+    selected_002 = find_best_fit(pos_002, valid_range_002)
+    selected_images.append(selected_002)
+    
+    # Bild 003 finden (muss nach 002 liegen)
+    min_003 = max(32, subfolder_images.index(selected_002))
+    valid_range_003 = (min_003, pos_004 - 1)
+    selected_003 = find_best_fit(pos_003, valid_range_003)
+    selected_images.append(selected_003)
+    
+    # Bild 004 finden (muss nach 003 liegen)
+    min_004 = max(61, subfolder_images.index(selected_003))
+    valid_range_004 = (min_004, num_images - 1)
+    selected_004 = find_best_fit(pos_004, valid_range_004)
+    selected_images.append(selected_004)
 
     # Neuer spezieller Unterordner für die Collage-Bilder im temporären Verzeichnis
     collage_temp_folder = os.path.join(config['paths']['temp_folder'], "collage_images")
